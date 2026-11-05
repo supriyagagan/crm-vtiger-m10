@@ -1,0 +1,13 @@
+<suite name="BatchExecution">
+
+    <test name="Selenium Tests">
+
+        <classes>
+            <class name="LoginTest"/>
+            <class name="SearchTest"/>
+            <class name="LogoutTest"/>
+        </classes>
+
+    </test>
+
+</suite>

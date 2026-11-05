@@ -2,482 +2,215 @@ package organization;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.List;
 
 import org.json.simple.parser.ParseException;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.ui.Select;
+import org.testng.Reporter;
+import org.testng.annotations.Test;
 
 import generic_utility.FileUtility;
+import generic_utility.JavaUtility;
+import generic_utility.WebDriverUtility;
+import object_repository.HomePage;
+import object_repository.LoginPage;
 
 /**
- * ============================================================================
- * Test Script Name : CreateOrgTest
- * ============================================================================
+ * Test Script: Create Organization
  *
- * Application      : Vtiger CRM
- * Module           : Organizations
- * Test Type        : Functional / UI Testing
+ * Purpose: This script automates the creation of a new Organization in the
+ * Vtiger CRM application.
  *
- * Automation Tool  : Selenium WebDriver
- * Programming Lang : Java
+ * Test Flow: 1. Launch browser 2. Maximize browser window 3. Configure implicit
+ * wait 4. Navigate to Vtiger CRM application 5. Login using valid credentials
+ * 6. Navigate to Organizations module 7. Open Create Organization page 8.
+ * Generate a unique organization name 9. Enter organization name 10. Add member
+ * 11. Save the organization 12. Verify the created organization name 13. Logout
+ * 14. Close the browser
  *
- * Description:
- * ----------------------------------------------------------------------------
- * This automation script verifies the creation of a new Organization
- * in the Vtiger CRM application.
+ * Expected Result: Organization should be created successfully and the actual
+ * organization name should match the generated name.
  *
- * The script performs the following activities:
+ * Application: Vtiger CRM
  *
- * 1. Reads browser and application details from the JSON file.
- * 2. Launches the configured browser.
- * 3. Maximizes the browser window.
- * 4. Configures an implicit wait of 15 seconds.
- * 5. Navigates to the Vtiger CRM application.
- * 6. Logs into the application using valid credentials.
- * 7. Navigates to the Organizations module.
- * 8. Opens the Create Organization page.
- * 9. Generates a unique Organization Name.
- * 10. Enters Organization details.
- * 11. Selects Industry and Organization Type.
- * 12. Enters Phone Number and Email Address.
- * 13. Saves the Organization.
- * 14. Captures the Organization Name displayed after saving.
- * 15. Compares Expected and Actual Organization Name.
- * 16. Logs out from Vtiger CRM.
- * 17. Closes the browser.
+ * Browser: Configured through JSON file
  *
- * Expected Result:
- * ----------------------------------------------------------------------------
- * The Organization should be created successfully and the Organization Name
- * displayed after saving should exactly match the Organization Name entered
- * during creation.
- *
- * Test Data:
- * ----------------------------------------------------------------------------
- * Username             : admin
- * Password             : manager
- * Industry             : Consulting
- * Organization Type    : Selected using index 4
- * Phone                : 7728029564
- * Email                : supriyagagan1992@gmail.com
- * Organization Name    : Dynamically generated using currentTimeMillis()
- *
- * Author:
- * ----------------------------------------------------------------------------
- * AutomationWithPiyush
- *
- * ============================================================================
+ * Author: AutomationWithPiyush
  */
-
 public class CreateOrgTest {
 
 	/**
-	 * Main method responsible for executing the complete Create Organization
-	 * automation flow.
+	 * Method to create organization in Vtiger CRM application.
 	 *
-	 * @param args command-line arguments
-	 * @throws InterruptedException if the execution is interrupted
-	 * @throws IOException if an I/O operation fails
-	 * @throws ParseException if JSON parsing fails
+	 * @throws ParseException
+	 * @throws IOException
+	 * @throws InterruptedException
 	 */
-	public static void main(String[] args)
-			throws InterruptedException, IOException, ParseException {
+	@Test
+	public void createOrgTest() throws IOException, ParseException, InterruptedException {
 
-		// ========================================================================
-		// TEST DATA CONFIGURATION
-		// ========================================================================
-		// Fetching browser, URL, username and password from JSON configuration file.
-
+		// Get data from JSON file
 		String browser = FileUtility.getDataFromJsonFile("bro");
 		String url = FileUtility.getDataFromJsonFile("url");
 		String username = FileUtility.getDataFromJsonFile("un");
 		String password = FileUtility.getDataFromJsonFile("pwd");
 
-		// ========================================================================
-		// TEST EXECUTION START
-		// ========================================================================
+		// Generate random number
+		long random = JavaUtility.generateRandomNumber();
 
-		System.out.println("================================================================");
-		System.out.println("        CREATE ORGANIZATION TEST EXECUTION STARTED");
-		System.out.println("================================================================");
+		// Get organization name from Excel and append random number
+		String orgName = FileUtility.getDataFromExcelFile("org", 3, 0) + random;
 
-		// ========================================================================
-		// STEP 1: LAUNCH BROWSER
-		// ========================================================================
+		Reporter.log("==============================================", true);
+		Reporter.log("       CREATE ORGANIZATION TEST STARTED       ", true);
+		Reporter.log("==============================================", true);
 
-		System.out.println("\n[STEP 1] Launching browser...");
-		System.out.println("[INFO] Configured browser : " + browser);
+		// Open browser
+		Reporter.log("[INFO] Launching " + browser + " browser...", true);
 
 		WebDriver driver = null;
 
-		if (browser.equals("chrome"))
+		if (browser.equals("chrome")) {
 			driver = new ChromeDriver();
-		else if (browser.equals("edge"))
+		} else if (browser.equals("edge")) {
 			driver = new EdgeDriver();
-		else if (browser.equals("firefox"))
+		} else if (browser.equals("firefox")) {
 			driver = new FirefoxDriver();
-		else
+		} else {
+			Reporter.log("[WARN] Invalid browser specified. Launching Chrome by default.", true);
 			driver = new ChromeDriver();
+		}
 
-		System.out.println("[PASS] Browser launched successfully.");
+		LoginPage lp = new LoginPage(driver);
+		HomePage hp = new HomePage(driver);
+		WebDriverUtility wdUtil = new WebDriverUtility(driver);
 
-		// ========================================================================
-		// STEP 2: MAXIMIZE BROWSER WINDOW
-		// ========================================================================
+		// Maximize browser
+		Reporter.log("[INFO] Maximizing browser window...", true);
+		wdUtil.maxWin();
 
-		System.out.println("\n[STEP 2] Maximizing browser window...");
-
-		driver.manage().window().maximize();
-
-		System.out.println("[PASS] Browser window maximized successfully.");
-
-		// ========================================================================
-		// STEP 3: CONFIGURE IMPLICIT WAIT
-		// ========================================================================
-
-		System.out.println("\n[STEP 3] Configuring implicit wait...");
-
+		// Configure implicit wait
+		Reporter.log("[INFO] Configuring implicit wait: 15 seconds...", true);
 		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(15));
 
-		System.out.println("[PASS] Implicit wait configured to 15 seconds.");
-
-		// ========================================================================
-		// STEP 4: NAVIGATE TO VTIGER CRM
-		// ========================================================================
-
-		System.out.println("\n[STEP 4] Navigating to Vtiger CRM application...");
-		System.out.println("[INFO] Application URL : " + url);
-
+		// Navigate to URL
+		Reporter.log("[INFO] Navigating to Vtiger CRM application...", true);
 		driver.get(url);
+		Reporter.log("[INFO] Application launched successfully.", true);
 
-		System.out.println("[PASS] Vtiger CRM application launched successfully.");
+		// Login
+		Reporter.log("[INFO] Starting login process...", true);
 
-		// ========================================================================
-		// STEP 5: LOGIN TO VTIGER CRM
-		// ========================================================================
+		lp.login(username, password);
 
-		System.out.println("\n---------------------------------------------------------------");
-		System.out.println("[STEP 5] Starting Vtiger CRM login process...");
-		System.out.println("---------------------------------------------------------------");
+		Reporter.log("[INFO] Login process completed successfully.", true);
 
-		WebElement usernamefield =
-				driver.findElement(By.name("user_name"));
+		// Navigate to Organizations module
+		Reporter.log("[INFO] Navigating to Organizations module...", true);
+		hp.getOrgLink().click();
 
-		WebElement passwordfield =
-				driver.findElement(By.name("user_password"));
+		// Open Create Organization page
+		Reporter.log("[INFO] Opening Create Organization page...", true);
+		driver.findElement(By.cssSelector("img[title='Create Organization...']")).click();
 
-		WebElement loginButton =
-				driver.findElement(By.id("submitButton"));
+		// Display generated organization name
+		Reporter.log("[INFO] Generated Organization Name: " + orgName, true);
 
-		System.out.println("[INFO] Login page elements located successfully.");
+		// Enter organization name
+		WebElement orgField = driver.findElement(By.name("accountname"));
 
-		System.out.println("[INFO] Entering username...");
-		usernamefield.sendKeys(username);
-		System.out.println("[PASS] Username entered successfully.");
-
-		System.out.println("[INFO] Entering password...");
-		passwordfield.sendKeys(password);
-		System.out.println("[PASS] Password entered successfully.");
-
-		System.out.println("[INFO] Clicking Login button...");
-		loginButton.click();
-
-		System.out.println("[PASS] Login button clicked successfully.");
-		System.out.println("[PASS] Login process completed successfully.");
-
-		// ========================================================================
-		// STEP 6: NAVIGATE TO ORGANIZATIONS MODULE
-		// ========================================================================
-
-		System.out.println("\n---------------------------------------------------------------");
-		System.out.println("[STEP 6] Navigating to Organizations module...");
-		System.out.println("---------------------------------------------------------------");
-
-		driver.findElement(By.linkText("Organizations")).click();
-
-		System.out.println("[PASS] Organizations module opened successfully.");
-
-		// ========================================================================
-		// STEP 7: OPEN CREATE ORGANIZATION PAGE
-		// ========================================================================
-
-		System.out.println("\n---------------------------------------------------------------");
-		System.out.println("[STEP 7] Opening Create Organization page...");
-		System.out.println("---------------------------------------------------------------");
-
-		// Get data from Excel file
-		String orgName = "qsp_" + System.currentTimeMillis();
-
-		String orgName1 =
-				FileUtility.getDataFromExcelFile("org", 3, 0) + orgName;
-
-		System.out.println("[INFO] Navigating to Organizations module...");
-
-		driver.findElement(By.linkText("Organizations")).click();
-
-		System.out.println("[INFO] Locating Create Organization option...");
-
-		driver.findElement(
-				By.cssSelector("img[title='Create Organization...']"))
-				.click();
-
-		System.out.println("[PASS] Create Organization page opened successfully.");
-
-		// ========================================================================
-		// STEP 8: GENERATE UNIQUE ORGANIZATION NAME
-		// ========================================================================
-
-		System.out.println("\n[STEP 8] Generating unique Organization Name...");
-
-		/*
-		 * System.currentTimeMillis() is used to generate a unique
-		 * Organization Name for every test execution.
-		 */
-
-		System.out.println("[INFO] Generated Organization Name : " + orgName);
-		System.out.println("[PASS] Unique Organization Name generated successfully.");
-
-		// ========================================================================
-		// STEP 9: ENTER ORGANIZATION DETAILS
-		// ========================================================================
-
-		System.out.println("\n---------------------------------------------------------------");
-		System.out.println("[STEP 9] Entering Organization details...");
-		System.out.println("---------------------------------------------------------------");
-
-		// ------------------------------------------------------------------------
-		// Organization Name
-		// ------------------------------------------------------------------------
-
-		System.out.println("[INFO] Locating Organization Name field...");
-
-		WebElement orgField =
-				driver.findElement(By.name("accountname"));
-
-		System.out.println("[INFO] Entering Organization Name...");
-
+		Reporter.log("[INFO] Entering Organization Name...", true);
 		orgField.sendKeys(orgName);
 
-		System.out.println("[PASS] Organization Name entered successfully.");
+		// Add member
+		Reporter.log("[INFO] Opening member selection window...", true);
 
-		// ------------------------------------------------------------------------
-		// Industry
-		// ------------------------------------------------------------------------
+		driver.findElement(By.cssSelector("[src='themes/softed/images/select.gif']")).click();
 
-		System.out.println("[INFO] Locating Industry dropdown...");
+		String PID = driver.getWindowHandle();
 
-		WebElement industry =
-				driver.findElement(By.name("industry"));
+		Reporter.log("[INFO] Switching to member selection window...", true);
 
-		Select selSingle = new Select(industry);
+		wdUtil.switchToWindowByUrl("TasksEditView");
 
-		System.out.println("[INFO] Selecting Industry : Consulting...");
+		// Get member organization name from Excel
+		String orgName2 = FileUtility.getDataFromExcelFile("org", 12, 0);
 
-		selSingle.selectByValue("Consulting");
+		Reporter.log("[INFO] Searching for organization/member: " + orgName2, true);
 
-		System.out.println("[PASS] Industry selected successfully.");
+		driver.findElement(By.name("search_text")).sendKeys(orgName2 + Keys.ENTER);
 
-		System.out.println("[INFO] Available Industry options:");
+		Reporter.log("[INFO] Selecting organization/member...", true);
 
-		List<WebElement> options = selSingle.getOptions();
+		driver.findElement(By.xpath("//a[text()='" + orgName2 + "']")).click();
 
-		for (WebElement i : options) {
-			System.out.println("[OPTION] " + i.getText());
-		}
+		Reporter.log("[INFO] Accepting alert...", true);
 
-		System.out.println("[PASS] Industry options displayed successfully.");
+		driver.switchTo().alert().accept();
 
-		// ------------------------------------------------------------------------
-		// Organization Type
-		// ------------------------------------------------------------------------
+		// Switch back to parent window
+		Reporter.log("[INFO] Switching back to Organization window...", true);
 
-		System.out.println("[INFO] Locating Organization Type dropdown...");
+		driver.switchTo().window(PID);
 
-		WebElement type =
-				driver.findElement(By.name("accounttype"));
+		Thread.sleep(3000);
 
-		Select selSingle1 = new Select(type);
+		// Save organization
+		Reporter.log("[INFO] Saving Organization...", true);
 
-		System.out.println(
-				"[INFO] Selecting Organization Type using index 4...");
+		driver.findElement(By.cssSelector("input[title='Save [Alt+S]']")).click();
 
-		selSingle1.selectByIndex(4);
+		Reporter.log("[INFO] Organization save operation completed.", true);
 
-		System.out.println(
-				"[PASS] Organization Type selected successfully.");
+		// Verification
+		Reporter.log("[INFO] Starting Organization creation verification...", true);
 
-		System.out.println("[INFO] Available Organization Type options:");
+		String actOrgName = driver.findElement(By.id("dtlview_Organization Name")).getText();
 
-		List<WebElement> options1 = selSingle1.getOptions();
+		Reporter.log("[INFO] Expected Organization Name: " + orgName, true);
 
-		for (WebElement i : options1) {
-			System.out.println("[OPTION] " + i.getText());
-		}
+		Reporter.log("[INFO] Actual Organization Name: " + actOrgName, true);
 
-		System.out.println(
-				"[PASS] Organization Type options displayed successfully.");
+		if (actOrgName.equals(orgName + "abc")) {
 
-		// ------------------------------------------------------------------------
-		// Phone Number
-		// ------------------------------------------------------------------------
-
-		System.out.println("[INFO] Locating Phone field...");
-
-		WebElement phone =
-				driver.findElement(By.id("phone"));
-
-		// ------------------------------------------------------------------------
-		// Email Address
-		// ------------------------------------------------------------------------
-
-		System.out.println("[INFO] Locating Email field...");
-
-		WebElement email =
-				driver.findElement(By.id("email1"));
-
-		System.out.println("[INFO] Entering Phone Number...");
-
-		phone.sendKeys("7728029564");
-
-		System.out.println("[PASS] Phone Number entered successfully.");
-
-		System.out.println("[INFO] Entering Email Address...");
-
-		email.sendKeys("supriyagagan1992@gmail.com");
-
-		System.out.println("[PASS] Email Address entered successfully.");
-
-		// ========================================================================
-		// STEP 10: SAVE ORGANIZATION
-		// ========================================================================
-
-		System.out.println("\n---------------------------------------------------------------");
-		System.out.println("[STEP 10] Saving Organization...");
-		System.out.println("---------------------------------------------------------------");
-
-		driver.findElement(
-				By.cssSelector("input[title='Save [Alt+S]']"))
-				.click();
-
-		System.out.println("[PASS] Save button clicked successfully.");
-		System.out.println("[PASS] Organization save operation completed.");
-
-		// ========================================================================
-		// STEP 11: VERIFY ORGANIZATION CREATION
-		// ========================================================================
-
-		System.out.println("\n---------------------------------------------------------------");
-		System.out.println(
-				"[STEP 11] Starting Organization creation verification...");
-		System.out.println("---------------------------------------------------------------");
-
-		String actOrgName =
-				driver.findElement(
-						By.id("dtlview_Organization Name"))
-						.getText();
-
-		System.out.println(
-				"[INFO] Organization details page loaded successfully.");
-
-		System.out.println(
-				"[INFO] Expected Organization Name : " + orgName);
-
-		System.out.println(
-				"[INFO] Actual Organization Name   : " + actOrgName);
-
-		// ========================================================================
-		// STEP 12: COMPARE EXPECTED AND ACTUAL ORGANIZATION NAME
-		// ========================================================================
-
-		System.out.println(
-				"\n[STEP 12] Comparing Expected and Actual Organization Name...");
-
-		if (actOrgName.equals(orgName)) {
-
-			System.out.println(
-					"[PASS] Organization Created Successfully.");
-
-			System.out.println(
-					"[PASS] Expected and Actual Organization Names match.");
-
-			System.out.println(
-					"[PASS] Organization creation verification completed successfully.");
+			Reporter.log("[PASS] Organization Created Successfully.", true);
 
 		} else {
 
-			System.out.println(
-					"[FAIL] Failed to create organization.");
-
-			System.out.println(
-					"[FAIL] Expected and Actual Organization Names do not match.");
-
-			System.out.println(
-					"[FAIL] Organization creation verification failed.");
+			Reporter.log("[FAIL] Failed to create organization.", true);
 		}
 
-		// ========================================================================
-		// STEP 13: LOGOUT FROM VTIGER CRM
-		// ========================================================================
+		// Logout
+		Reporter.log("[INFO] Starting logout process...", true);
 
-		System.out.println("\n---------------------------------------------------------------");
-		System.out.println("[STEP 13] Starting logout process...");
-		System.out.println("---------------------------------------------------------------");
+		WebElement profileIcon = hp.getProfileIcon();
 
-		WebElement profileIcon =
-				driver.findElement(
-						By.cssSelector(
-								"img[src='themes/softed/images/user.PNG']"));
+		Reporter.log("[INFO] Hovering over profile icon...", true);
 
-		Actions act = new Actions(driver);
+		wdUtil.hover(profileIcon);
 
-		System.out.println("[INFO] Hovering over profile icon...");
-
-		act.moveToElement(profileIcon)
-				.build()
-				.perform();
-
-		System.out.println(
-				"[PASS] Profile menu displayed successfully.");
-
-		System.out.println("[INFO] Clicking Sign Out...");
+		Reporter.log("[INFO] Clicking Sign Out...", true);
 
 		driver.findElement(By.linkText("Sign Out")).click();
 
-		System.out.println("[PASS] Sign Out clicked successfully.");
-		System.out.println("[PASS] Logout completed successfully.");
+		Reporter.log("[INFO] Logout completed successfully.", true);
 
-		// ========================================================================
-		// STEP 14: CLOSE BROWSER
-		// ========================================================================
-
-		System.out.println("\n---------------------------------------------------------------");
-		System.out.println("[STEP 14] Preparing to close browser...");
-		System.out.println("---------------------------------------------------------------");
-
-		System.out.println(
-				"[INFO] Waiting for 2 seconds before closing browser...");
+		// Close browser
+		Reporter.log("[INFO] Waiting for 2 seconds before closing browser...", true);
 
 		Thread.sleep(2000);
 
-		System.out.println("[INFO] Closing browser...");
+		Reporter.log("[INFO] Closing browser...", true);
 
 		driver.quit();
 
-		System.out.println("[PASS] Browser closed successfully.");
-
-		// ========================================================================
-		// TEST EXECUTION END
-		// ========================================================================
-
-		System.out.println("\n================================================================");
-		System.out.println("        CREATE ORGANIZATION TEST EXECUTION FINISHED");
-		System.out.println("================================================================");
+		Reporter.log("==============================================", true);
+		Reporter.log("       CREATE ORGANIZATION TEST FINISHED      ", true);
+		Reporter.log("==============================================", true);
 	}
 }
